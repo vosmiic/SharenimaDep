@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Sharenima.Models;
 
 namespace Sharenima.Controllers;
@@ -12,6 +14,7 @@ public class InstanceController : ControllerBase {
         _configuration = configuration;
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> CreateInstance([FromBody] Instance instance) {
         MainContext mainContext = new MainContext(_configuration);
@@ -19,6 +22,7 @@ public class InstanceController : ControllerBase {
             if (mainContext.Instance.Any(item => item.Name == instance.Name)) {
                 return BadRequest("An instance with that name already exists.");
             }
+            instance.OwnerId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             instance.CreatedDate = DateTime.UtcNow;
             mainContext.Instance.Add(instance);
             await mainContext.SaveChangesAsync();
