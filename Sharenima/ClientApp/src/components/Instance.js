@@ -48,7 +48,7 @@ export default function Instance() {
                 <h1>{instance.name}</h1>
                 <div>
                     <p>Welcome to {instance.name} created on {instance.createdDate}</p>
-                    <YoutubeFrame signlar={connection} instanceId={instanceId} />
+                    <YoutubeFrame signlar={connection} instance={instance} />
                 </div>
             </div>
         } else {

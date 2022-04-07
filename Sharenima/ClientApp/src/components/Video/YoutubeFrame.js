@@ -11,7 +11,7 @@ export default function YoutubeFrame(props) {
             async function run() {
                 if (player != null && player.getCurrentTime()) {
                     try {
-                        connection.invoke("ReceiveClientTime", props.instanceId.instanceName, await authService.getAccessToken(), player.getCurrentTime()).catch(function (err) {
+                        connection.invoke("ReceiveClientTime", props.instance.name, await authService.getAccessToken(), player.getCurrentTime()).catch(function (err) {
                             return console.error(err.toString());
                         });
                     } catch (err) {
@@ -25,6 +25,7 @@ export default function YoutubeFrame(props) {
     
     function _onReady(event) {
         event.target.playVideo();
+        event.target.seekTo(props.instance.timeSinceStartOfCurrentVideo);
         player = event.target;
     }
     
