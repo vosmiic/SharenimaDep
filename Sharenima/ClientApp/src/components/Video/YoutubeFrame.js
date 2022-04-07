@@ -1,27 +1,25 @@
 import React, {useEffect} from 'react';
 import YouTube from "react-youtube";
+import authService from "../api-authorization/AuthorizeService";
 
 export default function YoutubeFrame(props) {
     let player = null;
     let connection = props.signlar;
-
-    connection.on("Test", message => {
-        console.log(message);
-    })
     
     useEffect(() => {
         setInterval(() => {
-            console.log(connection);
-            if (player != null && player.getCurrentTime()) {
-                try {
-                    console.log(player.getCurrentTime());
-                    connection.invoke("ReceiveClientTime", player.getCurrentTime()).catch(function (err) {
-                        return console.error(err.toString());
-                    });
-                } catch (err) {
-                    console.error(err);
+            async function run() {
+                if (player != null && player.getCurrentTime()) {
+                    try {
+                        connection.invoke("ReceiveClientTime", props.instanceId.instanceName, await authService.getAccessToken(), player.getCurrentTime()).catch(function (err) {
+                            return console.error(err.toString());
+                        });
+                    } catch (err) {
+                        console.error(err);
+                    }
                 }
             }
+            run();
         }, 5000)
     }, [])
     

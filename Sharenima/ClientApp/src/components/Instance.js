@@ -2,36 +2,35 @@ import React, {useEffect, useState} from 'react';
 import {useParams} from "react-router-dom";
 import YoutubeFrame from "./Video/YoutubeFrame";
 import {HubConnectionBuilder, LogLevel} from "@microsoft/signalr"
+import authService from "./api-authorization/AuthorizeService";
 
 export default function Instance() {
     let [instance, setInstance] = useState(null);
     let instanceId = useParams();
     const [hubDisconnected, setHubDisconnected] = useState(false);
-    var hubConnection = new HubConnectionBuilder().withUrl('https://localhost:7198/hub') // todo change on prod
-        .configureLogging(LogLevel.Information)
-        .build();
-
+    const [connection, setConnection] = useState(null);
 
     useEffect(() => {
-        async function start() {
-            try {
-                await hubConnection.start();
-                console.log("SignalR Connected.");
-            } catch (err) {
-                console.log(err);
-                setTimeout(start, 5000);
-            }
-        }
+        async function run() {
+            let hubConnection = await new HubConnectionBuilder().withUrl('https://localhost:7198/hub', {accessTokenFactory: async () => await authService.getAccessToken()}) // todo change on prod
+                .configureLogging(LogLevel.Information)
+                .withAutomaticReconnect()
+                .build();
 
-        hubConnection.onclose(() => {
-            setHubDisconnected(true);
-            start();
-        });
-        hubConnection.onreconnected(() => {
-            setHubDisconnected(false);
-        });
-        start();
-    })
+            setConnection(hubConnection);
+        }
+        run();
+    }, [])
+
+    useEffect(() => {
+        if (connection) {
+            connection.start()
+                .then(result => {
+                    console.log('Connected!');
+                })
+                .catch(e => console.log('Connection failed: ', e));
+        }
+    }, [connection]);
 
     useEffect(() => {
         instance = fetch("instance/" + instanceId.instanceName, {
@@ -49,7 +48,7 @@ export default function Instance() {
                 <h1>{instance.name}</h1>
                 <div>
                     <p>Welcome to {instance.name} created on {instance.createdDate}</p>
-                    <YoutubeFrame signlar={hubConnection}/>
+                    <YoutubeFrame signlar={connection} instanceId={instanceId} />
                 </div>
             </div>
         } else {
