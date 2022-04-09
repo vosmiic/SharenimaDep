@@ -7,4 +7,10 @@ public class Instance : ModelBase {
     public Guid OwnerId { get; set; }
     public DateTime CreatedDate { get; set; }
     public Decimal TimeSinceStartOfCurrentVideo { get; set; }
+    public State State { get; set; }
+}
+
+public enum State {
+    Playing,
+    Paused
 }

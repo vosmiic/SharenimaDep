@@ -15,7 +15,7 @@ public class InstanceProgress : BackgroundService {
             MainContext mainContext = new MainContext();
 
             foreach (Instance instance in mainContext.Instance) {
-                await _hubContext.Clients.Group(instance.Name).SendAsync("progress", instance.TimeSinceStartOfCurrentVideo);
+                await _hubContext.Clients.Group(instance.Name).SendAsync("ProgressChange", instance.TimeSinceStartOfCurrentVideo);
             }
 
             await Task.Delay(3000, stoppingToken);

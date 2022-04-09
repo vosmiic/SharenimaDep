@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -7,10 +8,11 @@ using Sharenima.Data;
 using Sharenima.Models;
 using Sharenima.Services;
 
-namespace Sharenima; 
+namespace Sharenima;
 
 public class Startup {
     public static IConfiguration Configuration { get; private set; }
+
     public Startup(IConfiguration configuration) {
         Configuration = configuration;
     }
@@ -46,7 +48,8 @@ public class Startup {
 
         serviceCollection.AddHostedService<InstanceProgress>();
 
-        serviceCollection.AddSignalR(options => { options.EnableDetailedErrors = true; });
+        serviceCollection.AddSignalR(options => { options.EnableDetailedErrors = true; }
+        ).AddJsonProtocol(options => { options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter()); });
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
