@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Sharenima.Data;
 using Sharenima.Models;
+using Sharenima.Services;
 
 namespace Sharenima; 
 
@@ -42,6 +43,8 @@ public class Startup {
                 .AllowAnyHeader()
                 .AllowCredentials();
         }));
+
+        serviceCollection.AddHostedService<InstanceProgress>();
 
         serviceCollection.AddSignalR(options => { options.EnableDetailedErrors = true; });
     }

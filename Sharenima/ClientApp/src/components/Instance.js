@@ -9,16 +9,20 @@ export default function Instance() {
     let instanceId = useParams();
     const [hubDisconnected, setHubDisconnected] = useState(false);
     const [connection, setConnection] = useState(null);
+    const [accessToken, setAccessToken] = useState(null);
 
     useEffect(() => {
         async function run() {
-            let hubConnection = await new HubConnectionBuilder().withUrl('https://localhost:7198/hub', {accessTokenFactory: async () => await authService.getAccessToken()}) // todo change on prod
+            const accessToken = await authService.getAccessToken();
+            let hubConnection = await new HubConnectionBuilder().withUrl('https://localhost:7198/hub', {accessTokenFactory: async () => accessToken}) // todo change on prod
                 .configureLogging(LogLevel.Information)
                 .withAutomaticReconnect()
                 .build();
 
+            setAccessToken(accessToken);
             setConnection(hubConnection);
         }
+
         run();
     }, [])
 
@@ -27,6 +31,10 @@ export default function Instance() {
             connection.start()
                 .then(result => {
                     console.log('Connected!');
+                    
+                    connection.invoke("JoinGroup", instanceId.instanceName).catch(function (err) {
+                        return console.error(err.toString());
+                    });
                 })
                 .catch(e => console.log('Connection failed: ', e));
         }
@@ -48,7 +56,7 @@ export default function Instance() {
                 <h1>{instance.name}</h1>
                 <div>
                     <p>Welcome to {instance.name} created on {instance.createdDate}</p>
-                    <YoutubeFrame signlar={connection} instance={instance} />
+                    <YoutubeFrame signlar={connection} instance={instance} accessToken={accessToken} />
                 </div>
             </div>
         } else {

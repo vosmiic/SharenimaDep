@@ -1,13 +1,8 @@
-using System;
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using IdentityModel.Client;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Sharenima.Models;
 
-namespace Sharenima; 
+namespace Sharenima;
 
 public class SignalRHub : Hub {
     public async Task ReceiveClientTime(string instanceName, string token, decimal time) {
@@ -22,15 +17,17 @@ public class SignalRHub : Hub {
         } else {
             return;
         }
-        
-        await Clients.All.SendAsync("Test", "working");
+    }
+
+    public async Task JoinGroup(string group) {
+        await Groups.AddToGroupAsync(Context.ConnectionId, group);
     }
 
     private static Guid? ConvertAccessTokenToUserId(string accessToken) {
         var handler = new JwtSecurityTokenHandler();
         var jwtSecurityToken = handler.ReadJwtToken(accessToken);
         var userId = jwtSecurityToken.Claims.First(x => x.Type == "sub")?.Value;
-        
+
         return userId != null ? Guid.Parse(userId) : null;
     }
 }
