@@ -3,6 +3,7 @@ import {useParams} from "react-router-dom";
 import YoutubeFrame from "./Video/YoutubeFrame";
 import {HubConnectionBuilder, LogLevel} from "@microsoft/signalr"
 import authService from "./api-authorization/AuthorizeService";
+import InstanceSettings from "./InstanceSettings/InstanceSettings";
 
 export default function Instance() {
     let [instance, setInstance] = useState(null);
@@ -31,7 +32,7 @@ export default function Instance() {
             connection.start()
                 .then(result => {
                     console.log('Connected!');
-                    
+
                     connection.invoke("JoinGroup", instanceId.instanceName).catch(function (err) {
                         return console.error(err.toString());
                     });
@@ -41,7 +42,7 @@ export default function Instance() {
     }, [connection]);
 
     useEffect(() => {
-        instance = fetch("instance/" + instanceId.instanceName, {
+        fetch("instance/" + instanceId.instanceName, {
             method: "GET"
         }).then((response) => {
             if (response.ok) {
@@ -54,9 +55,10 @@ export default function Instance() {
         if (instance !== null) {
             return <div>
                 <h1>{instance.name}</h1>
+                <InstanceSettings instance={instance}/>
                 <div>
                     <p>Welcome to {instance.name} created on {instance.createdDate}</p>
-                    <YoutubeFrame signlar={connection} instance={instance} accessToken={accessToken} />
+                    <YoutubeFrame signlar={connection} instance={instance} accessToken={accessToken}/>
                 </div>
             </div>
         } else {
