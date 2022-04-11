@@ -59,7 +59,6 @@ export default function YoutubeFrame(props) {
 
     function _onReady(event) {
         event.target.seekTo(props.instance.timeSinceStartOfCurrentVideo);
-        console.log(props.instance.state);
         if (props.instance.state !== 1) {
             event.target.playVideo();
         } else {
