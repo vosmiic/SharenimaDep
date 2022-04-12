@@ -27,7 +27,9 @@ public class Startup {
         serviceCollection.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
             .AddEntityFrameworkStores<ApplicationDbContext>();
 
-        serviceCollection.AddIdentityServer()
+        serviceCollection.AddIdentityServer(options => {
+                options.IssuerUri = "https://localhost:44484"; //todo change for prod
+            })
             .AddApiAuthorization<ApplicationUser, ApplicationDbContext>();
 
         serviceCollection.AddAuthentication()
