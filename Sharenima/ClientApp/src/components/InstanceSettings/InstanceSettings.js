@@ -1,9 +1,10 @@
 import React, {useEffect, useState} from 'react';
 import {Backdrop, Box, Button, Tab, Tabs, Typography} from "@mui/material";
 import Roles from "./Tabs/Roles";
+import authService from "../api-authorization/AuthorizeService";
 
 export default function InstanceSettings(props) {
-    const [instanceSettings, setInstanceSettings] = useState(null);
+    const [instanceSettings, setInstanceSettings] = useState([]);
     const [value, setValue] = useState(0);
     const [displayInstanceSettings, setDisplayInstanceSettings] = useState(false);
 
@@ -28,13 +29,22 @@ export default function InstanceSettings(props) {
     }
 
     useEffect(() => {
-        fetch("instance/" + props.instance.name, {
-            method: "GET"
-        }).then((response) => {
-            if (response.ok) {
-                response.json().then((json) => setInstanceSettings(json));
-            }
-        });
+        async function run() {
+            const token = await authService.getAccessToken();
+
+            fetch("instance/" + props.instance.name + "/roles", {
+                method: "GET",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? 'Bearer ' + token : {}
+                }
+            }).then((response) => {
+                if (response.ok) {
+                    response.json().then((json) => setInstanceSettings(json));
+                }
+            });
+        }
+        run();
     }, [])
 
     function handleTabChange(event, newValue) {
@@ -55,7 +65,7 @@ export default function InstanceSettings(props) {
                         <Tab label={"Roles"}/>
                     </Tabs>
                     <TabPanel value={value} index={0}>
-                        tab
+                        <Roles instance={props.instance} instanceSettings={instanceSettings} />
                     </TabPanel>
                 </Box>
                 <Button onClick={handleToggleBackdrop}>Close</Button>
