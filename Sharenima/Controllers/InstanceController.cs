@@ -52,7 +52,7 @@ public class InstanceController : ControllerBase {
         
         Instance? instance = mainContext.Instance.FirstOrDefault(instance => instance.Name == instanceName && instance.OwnerId == parsedUserId);
         if (instance == null) return BadRequest("Instance could not be found.");
-        return Ok(mainContext.InstanceRoles.FirstOrDefault(roles => roles.InstanceId == instance.Id));
+        return Ok(mainContext.InstanceRoles.Where(roles => roles.InstanceId == instance.Id));
     }
 
     [Authorize]
