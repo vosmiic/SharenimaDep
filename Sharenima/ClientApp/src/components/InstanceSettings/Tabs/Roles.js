@@ -12,6 +12,7 @@ import {
     TextField
 } from "@mui/material";
 import authService from "../../api-authorization/AuthorizeService";
+import UserAutocomplete from "./UserAutocomplete";
 
 export default function Roles(props) {
     const [createNewRoleBackdrop, setCreateNewRoleBackdrop] = useState(false);
@@ -82,7 +83,7 @@ export default function Roles(props) {
                         alignItems="stretch"
                         spacing={2}
                     >
-                        <Item>Users</Item>
+                        <Item><UserAutocomplete users={roles.users}/></Item>
                         <Item>Permissions</Item>
                     </Stack>
                     <Button>Save</Button>
