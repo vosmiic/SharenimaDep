@@ -1,8 +1,8 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {
     Backdrop,
     Box,
-    Button,
+    Button, Checkbox, FormControl, FormControlLabel,
     Grid,
     List,
     ListItem,
@@ -13,10 +13,13 @@ import {
 } from "@mui/material";
 import authService from "../../api-authorization/AuthorizeService";
 import UserAutocomplete from "./UserAutocomplete";
+import {Save} from "@mui/icons-material";
 
 export default function Roles(props) {
     const [createNewRoleBackdrop, setCreateNewRoleBackdrop] = useState(false);
     const [roles, setRoles] = useState(props.instanceSettings)
+    const [currentRoleId, setCurrentRoleId] = useState(null);
+    const [rolePermissions, setRolePermissions] = useState([]);
 
     const Item = styled(Paper)(({theme}) => ({
         backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -48,9 +51,33 @@ export default function Roles(props) {
     function handleCreateNewRoleButton() {
         setCreateNewRoleBackdrop(!createNewRoleBackdrop);
     }
+    
+    async function getRolePermissions(roleId) {
+        const token = await authService.getAccessToken();
 
-    function handleChangeRole(roleId) {
-
+        fetch("instance/" + props.instance.name + "/permissions?roleId=" + roleId, {
+            method: "GET",
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': token ? 'Bearer ' + token : {}
+            }
+        }).then((response) => {
+            if (response.ok) {
+                response.json().then((json) => {
+                    setRolePermissions(json);
+                });
+            }
+        });
+    }
+    
+    function changeRolePermissions(key, value) {
+        if (rolePermissions != null) {
+            for (let x = 0; x < rolePermissions.length; x++) {
+                if (rolePermissions[x].key === key) {
+                    rolePermissions[x].value = value;
+                }
+            }
+        }
     }
 
     return (
@@ -66,9 +93,12 @@ export default function Roles(props) {
                         </Box>
                     </Backdrop>
                     <List>
-                        {roles.map(function (role) {
+                        {roles.map((role) => {
                             return <ListItem>
-                                <ListItemButton onClick={handleChangeRole(role.id)}>
+                                <ListItemButton onClick={() => {
+                                    getRolePermissions(role.id);
+                                    setCurrentRoleId(role.id);
+                                }}>
                                     <ListItemText primary={role.roleName} id={role.id}/>
                                 </ListItemButton>
                             </ListItem>
@@ -84,7 +114,9 @@ export default function Roles(props) {
                         spacing={2}
                     >
                         <Item><UserAutocomplete users={roles.users}/></Item>
-                        <Item>Permissions</Item>
+                        <Item>{rolePermissions.map((permission) => {
+                            return <FormControlLabel control={<Checkbox checked={permission.value} />} label={permission.key} onChange={() => changeRolePermissions(permission.key, permission.value)}/>
+                        })}</Item>
                     </Stack>
                     <Button>Save</Button>
                 </Grid>

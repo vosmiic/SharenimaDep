@@ -7,17 +7,9 @@ namespace Sharenima;
 public class MainContext : DbContext {
     public DbSet<Instance> Instance { get; set; }
     public DbSet<InstanceRoles> InstanceRoles { get; set; }
+    public DbSet<RolePermissions> RolePermissions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
-        modelBuilder
-            .Entity<InstanceRoles>()
-            .Property(item => item.Permissions)
-            .HasConversion(
-                item => string.Join(";", item),
-                item => item.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList()
-                    .Select(roles => Enum.Parse(typeof(Permissions), roles))
-                    .Cast<Permissions>()
-                    .ToList());
         modelBuilder
             .Entity<InstanceRoles>()
             .Property(item => item.Users)

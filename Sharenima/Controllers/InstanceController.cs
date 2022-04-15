@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sharenima.Helpers;
 using Sharenima.Models;
 
 namespace Sharenima.Controllers;
@@ -49,7 +50,7 @@ public class InstanceController : ControllerBase {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier);
         if (userId == null) return BadRequest("User ID not found.");
         Guid parsedUserId = Guid.Parse(userId.Value);
-        
+
         Instance? instance = mainContext.Instance.FirstOrDefault(instance => instance.Name == instanceName && instance.OwnerId == parsedUserId);
         if (instance == null) return BadRequest("Instance could not be found.");
         return Ok(mainContext.InstanceRoles.Where(roles => roles.InstanceId == instance.Id));
@@ -63,19 +64,43 @@ public class InstanceController : ControllerBase {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier);
         if (userId == null) return BadRequest("User ID not found.");
         Guid parsedUserId = Guid.Parse(userId.Value);
-        
+
         Instance? instance = mainContext.Instance.FirstOrDefault(instance => instance.Name == instanceName && instance.OwnerId == parsedUserId);
         if (instance == null) return BadRequest("Instance could not be found.");
 
         InstanceRoles instanceRole = new InstanceRoles {
-            //Id = Guid.NewGuid(),
             InstanceId = instance.Id,
             RoleName = roleName,
-            Permissions = new List<Permissions>(),
             Users = new List<Guid>()
         };
         mainContext.InstanceRoles.Add(instanceRole);
         await mainContext.SaveChangesAsync();
         return Ok(instanceRole);
+    }
+
+    [Authorize]
+    [HttpGet]
+    [Route("{instanceName}/permissions")]
+    public async Task<IActionResult> GetInstancePermissions(string instanceName, Guid roleId) {
+        MainContext mainContext = new MainContext();
+
+        Instance? instance = mainContext.Instance.FirstOrDefault(instance => instance.Name == instanceName);
+        if (instance == null) return NotFound("Instance not found.");
+
+        IQueryable<RolePermissions> rolePermissions = mainContext.RolePermissions.Where(permissions => permissions.RoleId == roleId);
+        List<KeyValuePair<string, string?>> permissionPair = new List<KeyValuePair<string, string?>>();
+        var permissions = Enum.GetValues(typeof(Permissions)).Cast<Permissions>();
+        if (!rolePermissions.Any()) {
+            permissionPair.AddRange(permissions.Select(permission => new KeyValuePair<string, string?>(EnumHelper.GetEnumDescription(permission), null)));
+
+            return Ok(permissionPair);
+        }
+
+        foreach (Permissions permission in permissions) {
+            RolePermissions? permissionExists = rolePermissions.FirstOrDefault(rolePermission => rolePermission.Permission == permission);
+            permissionPair.Add(new KeyValuePair<string, string?>(EnumHelper.GetEnumDescription(permission), permissionExists?.Value));
+        }
+
+        return Ok(permissionPair);
     }
 }
