@@ -5,7 +5,7 @@ namespace Sharenima.Models;
 public class RolePermissions : ModelBase {
     public Guid RoleId { get; set; }
     public Permissions Permission { get; set; }
-    public string Value { get; set; }
+    public string? Value { get; set; }
 
 }
 

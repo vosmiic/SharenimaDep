@@ -88,17 +88,17 @@ public class InstanceController : ControllerBase {
         if (instance == null) return NotFound("Instance not found.");
 
         IQueryable<RolePermissions> rolePermissions = mainContext.RolePermissions.Where(permissions => permissions.RoleId == roleId);
-        List<KeyValuePair<string, string?>> permissionPair = new List<KeyValuePair<string, string?>>();
+        List<PermissionView> permissionPair = new List<PermissionView>();
         var permissions = Enum.GetValues(typeof(Permissions)).Cast<Permissions>();
         if (!rolePermissions.Any()) {
-            permissionPair.AddRange(permissions.Select(permission => new KeyValuePair<string, string?>(EnumHelper.GetEnumDescription(permission), null)));
+            permissionPair.AddRange(permissions.Select(permission => new PermissionView { FriendlyName = EnumHelper.GetEnumDescription(permission), Name = permission, Value = null }));
 
             return Ok(permissionPair);
         }
 
         foreach (Permissions permission in permissions) {
             RolePermissions? permissionExists = rolePermissions.FirstOrDefault(rolePermission => rolePermission.Permission == permission);
-            permissionPair.Add(new KeyValuePair<string, string?>(EnumHelper.GetEnumDescription(permission), permissionExists?.Value));
+            permissionPair.Add(new PermissionView { FriendlyName = EnumHelper.GetEnumDescription(permission), Name = permission, Value = permissionExists?.Value });
         }
 
         return Ok(permissionPair);
