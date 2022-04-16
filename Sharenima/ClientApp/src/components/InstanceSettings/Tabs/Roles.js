@@ -20,7 +20,8 @@ export default function Roles(props) {
     const [roles, setRoles] = useState(props.instanceSettings)
     const [currentRoleId, setCurrentRoleId] = useState(null);
     const [rolePermissions, setRolePermissions] = useState([]);
-
+    let roleUsers = [];
+    
     const Item = styled(Paper)(({theme}) => ({
         backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
         ...theme.typography.body2,
@@ -47,6 +48,30 @@ export default function Roles(props) {
             }
         });
     }
+    
+    async function saveRole() {
+        const token = await authService.getAccessToken();
+        
+        rolePermissions.forEach((item) => {
+            item.value = item.value.toString();
+        });
+        
+        fetch("/roles?roleId=" + currentRoleId, {
+            method: "PUT",
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': token ? 'Bearer ' + token : {}
+            },
+            body: JSON.stringify({
+                users: roleUsers,
+                permissions: rolePermissions
+            })
+        }).then((response) => {
+            if (response.ok) {
+                
+            }
+        });
+    }
 
     function handleCreateNewRoleButton() {
         setCreateNewRoleBackdrop(!createNewRoleBackdrop);
@@ -70,14 +95,20 @@ export default function Roles(props) {
         });
     }
     
-    function changeRolePermissions(key, value) {
+    function changeRolePermissions(event, name) {
         if (rolePermissions != null) {
-            for (let x = 0; x < rolePermissions.length; x++) {
-                if (rolePermissions[x].key === key) {
-                    rolePermissions[x].value = value;
+            var newRolePermissions = rolePermissions.slice();
+            for (let x = 0; x < newRolePermissions.length; x++) {
+                if (newRolePermissions[x].name === name) {
+                    newRolePermissions[x].value = event.target.checked
                 }
             }
+            setRolePermissions(newRolePermissions);
         }
+    }
+    
+    function setRolesUsers(users) {
+        roleUsers = users;
     }
 
     return (
@@ -94,7 +125,7 @@ export default function Roles(props) {
                     </Backdrop>
                     <List>
                         {roles.map((role) => {
-                            return <ListItem>
+                            return <ListItem key={role.id}>
                                 <ListItemButton onClick={() => {
                                     getRolePermissions(role.id);
                                     setCurrentRoleId(role.id);
@@ -113,12 +144,12 @@ export default function Roles(props) {
                         alignItems="stretch"
                         spacing={2}
                     >
-                        <Item><UserAutocomplete users={roles.users}/></Item>
+                        <Item><UserAutocomplete setRoleUsers={setRolesUsers}/></Item>
                         <Item>{rolePermissions.map((permission) => {
-                            return <FormControlLabel control={<Checkbox checked={permission.value} />} label={permission.key} onChange={() => changeRolePermissions(permission.key, permission.value)}/>
+                            return <FormControlLabel control={<Checkbox checked={permission.value === "true" || permission.value === true} onChange={(event) => changeRolePermissions(event, permission.name,)}/>} label={permission.friendlyName} />
                         })}</Item>
                     </Stack>
-                    <Button>Save</Button>
+                    <Button onClick={saveRole}>Save</Button>
                 </Grid>
             </Grid>
         </>

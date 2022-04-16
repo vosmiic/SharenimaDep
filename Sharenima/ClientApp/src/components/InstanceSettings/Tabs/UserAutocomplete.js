@@ -4,7 +4,7 @@ import Autocomplete from '@mui/material/Autocomplete';
 import CircularProgress from '@mui/material/CircularProgress';
 import authService from "../../api-authorization/AuthorizeService";
 
-export default function UserAutocomplete() {
+export default function UserAutocomplete(props) {
     const [open, setOpen] = useState(false);
     const [options, setOptions] = useState([]);
     const loading = open && options.length === 0;
@@ -62,6 +62,7 @@ export default function UserAutocomplete() {
             options={options}
             loading={loading}
             multiple
+            onChange={(event, value) => props.setRoleUsers(value)}
             renderInput={(params) => (
                 <TextField
                     {...params}
