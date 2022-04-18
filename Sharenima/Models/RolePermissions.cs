@@ -20,6 +20,8 @@ public enum Permissions {
     CanDeleteVideos,
     [Description("Can Skip Videos?")]
     CanSkipVideos,
+    [Description("Can Pause/Resume Videos?")]
+    CanPauseResumeVideos,
     [Description("Can Chat?")]
     CanChat
 }
