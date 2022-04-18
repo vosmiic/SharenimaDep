@@ -10,12 +10,10 @@ public class SignalRHub : Hub {
         if (userId == null) return;
         MainContext mainContext = new MainContext();
         Instance? instance = mainContext.Instance.FirstOrDefault(instance => instance.Name == instanceName);
-        if (instance == null) return;
-        if (instance.OwnerId == userId && instance.TimeSinceStartOfCurrentVideo != time) {
+        if (instance == null || instance.TimeSinceStartOfCurrentVideo == time) return;
+        if (instance.OwnerId == userId || CheckIfUserHasPermissionValue(mainContext, instance.Id, userId.Value, Permissions.CanChangeVideoTime, "true")) {
             instance.TimeSinceStartOfCurrentVideo = time;
             await mainContext.SaveChangesAsync();
-        } else {
-            return;
         }
     }
 
@@ -25,10 +23,12 @@ public class SignalRHub : Hub {
         MainContext mainContext = new MainContext();
         Instance? instance = mainContext.Instance.FirstOrDefault(instance => instance.Name == instanceName);
         if (instance == null) return;
-        if (instance.OwnerId == userId && instance.State != state) {
-            instance.State = state;
-            await mainContext.SaveChangesAsync();
-            await Clients.Group(instanceName).SendAsync("StateChange", state);
+        if (instance.State != state) {
+            if (instance.OwnerId == userId || CheckIfUserHasPermissionValue(mainContext, instance.Id, userId.Value, Permissions.CanPauseResumeVideos, "true")) {
+                instance.State = state;
+                await mainContext.SaveChangesAsync();
+                await Clients.Group(instanceName).SendAsync("StateChange", state);
+            }
         }
     }
 
@@ -42,5 +42,15 @@ public class SignalRHub : Hub {
         var userId = jwtSecurityToken.Claims.First(x => x.Type == "sub")?.Value;
 
         return userId != null ? Guid.Parse(userId) : null;
+    }
+
+    private static bool CheckIfUserHasPermissionValue(MainContext mainContext, Guid instanceId, Guid userId, Permissions permission, string value) {
+        var instanceRole = mainContext.InstanceRoles.ToList().FirstOrDefault(instanceRole => instanceRole.InstanceId == instanceId &&
+                                                                                             instanceRole.Users.Contains(userId));
+        if (instanceRole == null) return false;
+        var rolePermission = mainContext.RolePermissions.FirstOrDefault(rolePermission => rolePermission.RoleId == instanceRole.Id &&
+                                                                                          rolePermission.Permission == permission &&
+                                                                                          rolePermission.Value == value);
+        return rolePermission != null;
     }
 }
