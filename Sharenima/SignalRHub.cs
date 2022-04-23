@@ -1,6 +1,12 @@
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.SignalR;
+using Sharenima.Helpers;
 using Sharenima.Models;
+using YoutubeExplode;
+using YoutubeExplode.Common;
+using YoutubeExplode.Exceptions;
+using YoutubeExplode.Playlists;
+using YoutubeExplode.Videos;
 
 namespace Sharenima;
 
@@ -9,9 +15,9 @@ public class SignalRHub : Hub {
         Guid? userId = ConvertAccessTokenToUserId(token);
         if (userId == null) return;
         MainContext mainContext = new MainContext();
-        Instance? instance = mainContext.Instance.FirstOrDefault(instance => instance.Name == instanceName);
+        Instance? instance = InstanceHelper.GetInstanceByName(mainContext, instanceName);
         if (instance == null || instance.TimeSinceStartOfCurrentVideo == time) return;
-        if (instance.OwnerId == userId || CheckIfUserHasPermissionValue(mainContext, instance.Id, userId.Value, Permissions.CanChangeVideoTime, "true")) {
+        if (instance.OwnerId == userId || PermissionHelper.CheckIfUserHasPermissionValue(mainContext, instance.Id, userId.Value, Permissions.CanChangeVideoTime, "true")) {
             instance.TimeSinceStartOfCurrentVideo = time;
             await mainContext.SaveChangesAsync();
         }
@@ -21,10 +27,10 @@ public class SignalRHub : Hub {
         Guid? userId = ConvertAccessTokenToUserId(token);
         if (userId == null) return;
         MainContext mainContext = new MainContext();
-        Instance? instance = mainContext.Instance.FirstOrDefault(instance => instance.Name == instanceName);
+        Instance? instance = InstanceHelper.GetInstanceByName(mainContext, instanceName);
         if (instance == null) return;
         if (instance.State != state) {
-            if (instance.OwnerId == userId || CheckIfUserHasPermissionValue(mainContext, instance.Id, userId.Value, Permissions.CanPauseResumeVideos, "true")) {
+            if (instance.OwnerId == userId || PermissionHelper.CheckIfUserHasPermissionValue(mainContext, instance.Id, userId.Value, Permissions.CanPauseResumeVideos, "true")) {
                 instance.State = state;
                 await mainContext.SaveChangesAsync();
                 await Clients.Group(instanceName).SendAsync("StateChange", state);
@@ -42,15 +48,5 @@ public class SignalRHub : Hub {
         var userId = jwtSecurityToken.Claims.First(x => x.Type == "sub")?.Value;
 
         return userId != null ? Guid.Parse(userId) : null;
-    }
-
-    private static bool CheckIfUserHasPermissionValue(MainContext mainContext, Guid instanceId, Guid userId, Permissions permission, string value) {
-        var instanceRole = mainContext.InstanceRoles.ToList().FirstOrDefault(instanceRole => instanceRole.InstanceId == instanceId &&
-                                                                                             instanceRole.Users.Contains(userId));
-        if (instanceRole == null) return false;
-        var rolePermission = mainContext.RolePermissions.FirstOrDefault(rolePermission => rolePermission.RoleId == instanceRole.Id &&
-                                                                                          rolePermission.Permission == permission &&
-                                                                                          rolePermission.Value == value);
-        return rolePermission != null;
     }
 }
