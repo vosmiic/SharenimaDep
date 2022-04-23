@@ -8,6 +8,7 @@ public class MainContext : DbContext {
     public DbSet<Instance> Instance { get; set; }
     public DbSet<InstanceRoles> InstanceRoles { get; set; }
     public DbSet<RolePermissions> RolePermissions { get; set; }
+    public DbSet<VideoQueue> VideoQueues { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
         modelBuilder
