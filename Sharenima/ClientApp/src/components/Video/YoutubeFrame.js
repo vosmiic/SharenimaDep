@@ -86,6 +86,6 @@ export default function YoutubeFrame(props) {
 
     return (
         <YouTube videoId={"K1PCl5D-IpU"} onReady={_onReady} onStateChange={_onStateChanged}
-                 opts={{playerVars: {origin: window.location.origin}}}/>
+                 opts={{playerVars: {origin: window.location.origin}, width: "100%", height: "500"}}/>
     )
 }
