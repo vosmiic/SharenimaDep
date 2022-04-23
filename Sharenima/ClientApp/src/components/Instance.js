@@ -4,6 +4,9 @@ import YoutubeFrame from "./Video/YoutubeFrame";
 import {HubConnectionBuilder, LogLevel} from "@microsoft/signalr"
 import authService from "./api-authorization/AuthorizeService";
 import InstanceSettings from "./InstanceSettings/InstanceSettings";
+import {Grid, IconButton, InputBase, Paper} from "@mui/material";
+import {AddCircle} from "@mui/icons-material";
+import SidePanel from "./SidePanel/SidePanel";
 
 export default function Instance() {
     let [instance, setInstance] = useState(null);
@@ -11,6 +14,7 @@ export default function Instance() {
     const [hubDisconnected, setHubDisconnected] = useState(false);
     const [connection, setConnection] = useState(null);
     const [accessToken, setAccessToken] = useState(null);
+    const [videoIdList, setVideoIdList] = useState([]);
 
     useEffect(() => {
         async function run() {
@@ -56,10 +60,15 @@ export default function Instance() {
             return <div>
                 <h1>{instance.name}</h1>
                 <InstanceSettings instance={instance}/>
-                <div>
-                    <p>Welcome to {instance.name} created on {instance.createdDate}</p>
-                    <YoutubeFrame signlar={connection} instance={instance} accessToken={accessToken}/>
-                </div>
+                <p>Welcome to {instance.name} created on {instance.createdDate}</p>
+                <Grid container spacing={2}>
+                    <Grid item xs={8}>
+                        <YoutubeFrame signlar={connection} instance={instance} accessToken={accessToken}/>
+                    </Grid>
+                    <Grid item xs={4}>
+                        <SidePanel signalr={connection} instance={instance} setVideoIdList={setVideoIdList} videoIdList={videoIdList}/>
+                    </Grid>
+                </Grid>
             </div>
         } else {
             return <h1>Instance does not exist</h1>
