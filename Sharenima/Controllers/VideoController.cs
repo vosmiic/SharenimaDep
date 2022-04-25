@@ -55,8 +55,10 @@ public class VideoController : ControllerBase {
                 ThumbnailUrl = video.Thumbnails.MinBy(thumbnail => thumbnail.Resolution.Area)?.Url,
                 Title = video.Title,
                 Description = video.Description,
-                Url = url
+                Url = url,
+                VideoId = video.Id
             };
+            
             mainContext.VideoQueues.Add(videoQueueEntry);
             await mainContext.SaveChangesAsync();
             await _hubContext.Clients.Group(instanceName).SendAsync("VideoAddedToQueue", videoQueueEntry);

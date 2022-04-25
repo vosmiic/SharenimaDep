@@ -25,7 +25,7 @@ export default function Queue(props) {
     useEffect(() => {
         if (props.signalr != null) {
             props.signalr.on("VideoAddedToQueue", (videos) => {
-                props.setVideoIdList([...queuedVideos, videos]);
+                props.setVideoIdList([...props.videoIdList, videos]);
             })
         }
     }, [props.signalr])

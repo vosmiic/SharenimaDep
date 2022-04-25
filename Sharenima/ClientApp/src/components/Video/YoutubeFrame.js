@@ -1,24 +1,26 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import YouTube from "react-youtube";
 import authService from "../api-authorization/AuthorizeService";
 import {instance} from "eslint-plugin-react/lib/util/lifecycleMethods";
 
 export default function YoutubeFrame(props) {
-    let player = null;
-    let connection = props.signlar;
+    const [video, setVideo] = useState(undefined);
+    const [currentPlaying, setCurrentlyPlaying] = useState({"videoId": null});
 
     useEffect(() => {
         if (props.accessToken != null) {
             setInterval(() => {
                 async function run() {
-                    if (player != null && player.getCurrentTime()) {
-                        try {
-                            connection.invoke("ReceiveClientTime", props.instance.name, props.accessToken, player.getCurrentTime()).catch(function (err) {
-                                return console.error(err.toString());
-                            });
-                        } catch (err) {
-                            console.error(err);
-                        }
+                    if (props.signlar != null && video != null && video.getCurrentTime()) {
+                        video.getCurrentTime().then(function (time) {
+                            try {
+                                props.signlar.invoke("ReceiveClientTime", props.instance.name, props.accessToken, time).catch(function (err) {
+                                    return console.error(err.toString());
+                                });
+                            } catch (err) {
+                                console.error(err);
+                            }
+                        })
                     }
                 }
 
@@ -28,64 +30,85 @@ export default function YoutubeFrame(props) {
     }, [props.accessToken])
 
     useEffect(() => {
-        if (connection != null) {
-            connection.on("ProgressChange", (time) => {
-                if (player != null) {
-                    var difference = player.getCurrentTime() - time;
+        if (props.signlar != null) {
+            props.signlar.on("ProgressChange", (time) => {
+                if (video != null) {
+                    var difference = video.getCurrentTime() - time;
+                    console.log(video);
                     if (difference < -2 || difference > 2) {
-                        player.seekTo(time);
+                        //player.current.internalPlayer.seekTo(time);
                     }
                 }
             })
         }
-    }, [connection])
+    }, [props.signlar])
 
     useEffect(() => {
-        if (connection != null) {
-            connection.on("StateChange", (state) => {
-                if (player != null) {
+        if (props.signlar != null) {
+            props.signlar.on("StateChange", (state) => {
+                if (video != null) {
                     switch (state) {
                         case "Playing":
-                            player.playVideo();
+                            video.playVideo();
                             break;
                         case "Paused":
-                            player.pauseVideo();
+                            video.pauseVideo();
                             break;
                     }
                 }
             })
         }
-    }, [connection])
+    }, [props.signlar])
+
+    useEffect(() => {
+        if (props.videoIdList != null) {
+            if (props.videoIdList[0] != null) {
+                setCurrentlyPlaying(props.videoIdList[0]);
+            }
+        }
+    }, [props.videoIdList])
 
     function _onReady(event) {
         event.target.seekTo(props.instance.timeSinceStartOfCurrentVideo);
+        setVideo(event.target);
         if (props.instance.state !== 1) {
             event.target.playVideo();
         } else {
             event.target.pauseVideo();
         }
-        player = event.target;
     }
 
     function _onStateChanged(event) {
-        if (props.accessToken != null && player != null) {
+        if (props.accessToken != null && video != null) {
             switch (event.data) {
                 case 1:
-                    connection.invoke("StateChange", props.instance.name, props.accessToken, "Playing").catch(function (err) {
+                    props.signlar.invoke("StateChange", props.instance.name, props.accessToken, "Playing").catch(function (err) {
                         return console.error(err.toString());
                     });
                     break;
                 case 2:
-                    connection.invoke("StateChange", props.instance.name, props.accessToken, "Paused").catch(function (err) {
+                    props.signlar.invoke("StateChange", props.instance.name, props.accessToken, "Paused").catch(function (err) {
                         return console.error(err.toString());
                     });
+                    break;
+                case 0:
+                    if (props.videoIdList != null) {
+                        const index = props.videoIdList.indexOf(currentPlaying);
+                        if (props.videoIdList[index + 1] != null) {
+                            setCurrentlyPlaying(props.videoIdList[index + 1]);
+                            video.loadVideoById(props.videoIdList[index + 1].videoId, 0);
+                        }
+                        let videoIdListCopy = [...props.videoIdList];
+                        videoIdListCopy.splice(index, 1);
+                        props.setVideoIdList(videoIdListCopy);
+                    }
                     break;
             }
         }
     }
 
     return (
-        <YouTube videoId={"K1PCl5D-IpU"} onReady={_onReady} onStateChange={_onStateChanged}
+        <YouTube videoId={currentPlaying.videoId} onReady={_onReady} onStateChange={_onStateChanged}
                  opts={{playerVars: {origin: window.location.origin}, width: "100%", height: "500"}}/>
     )
 }
