@@ -4,15 +4,15 @@ import authService from "../api-authorization/AuthorizeService";
 import {instance} from "eslint-plugin-react/lib/util/lifecycleMethods";
 
 export default function YoutubeFrame(props) {
-    const [video, setVideo] = useState(undefined);
+    const playerRef = useRef(null);
     const [currentPlaying, setCurrentlyPlaying] = useState({"videoId": null});
 
     useEffect(() => {
         if (props.accessToken != null) {
             setInterval(() => {
                 async function run() {
-                    if (props.signlar != null && video != null && video.getCurrentTime()) {
-                        video.getCurrentTime().then(function (time) {
+                    if (props.signlar != null && playerRef?.current?.internalPlayer) {
+                        playerRef?.current?.internalPlayer.getCurrentTime().then(function (time) {
                             try {
                                 props.signlar.invoke("ReceiveClientTime", props.instance.name, props.accessToken, time).catch(function (err) {
                                     return console.error(err.toString());
@@ -32,11 +32,10 @@ export default function YoutubeFrame(props) {
     useEffect(() => {
         if (props.signlar != null) {
             props.signlar.on("ProgressChange", (time) => {
-                if (video != null) {
-                    var difference = video.getCurrentTime() - time;
-                    console.log(video);
+                if (playerRef?.current?.internalPlayer) {
+                    var difference = playerRef?.current?.internalPlayer.getCurrentTime() - time;
                     if (difference < -2 || difference > 2) {
-                        //player.current.internalPlayer.seekTo(time);
+                        playerRef?.current?.internalPlayer.seekTo(time);
                     }
                 }
             })
@@ -46,13 +45,13 @@ export default function YoutubeFrame(props) {
     useEffect(() => {
         if (props.signlar != null) {
             props.signlar.on("StateChange", (state) => {
-                if (video != null) {
+                if (playerRef?.current?.internalPlayer) {
                     switch (state) {
                         case "Playing":
-                            video.playVideo();
+                            playerRef?.current?.internalPlayer.playVideo();
                             break;
                         case "Paused":
-                            video.pauseVideo();
+                            playerRef?.current?.internalPlayer.pauseVideo();
                             break;
                     }
                 }
@@ -70,7 +69,6 @@ export default function YoutubeFrame(props) {
 
     function _onReady(event) {
         event.target.seekTo(props.instance.timeSinceStartOfCurrentVideo);
-        setVideo(event.target);
         if (props.instance.state !== 1) {
             event.target.playVideo();
         } else {
@@ -79,7 +77,7 @@ export default function YoutubeFrame(props) {
     }
 
     function _onStateChanged(event) {
-        if (props.accessToken != null && video != null) {
+        if (props.accessToken != null && playerRef?.current?.internalPlayer) {
             switch (event.data) {
                 case 1:
                     props.signlar.invoke("StateChange", props.instance.name, props.accessToken, "Playing").catch(function (err) {
@@ -96,7 +94,7 @@ export default function YoutubeFrame(props) {
                         const index = props.videoIdList.indexOf(currentPlaying);
                         if (props.videoIdList[index + 1] != null) {
                             setCurrentlyPlaying(props.videoIdList[index + 1]);
-                            video.loadVideoById(props.videoIdList[index + 1].videoId, 0);
+                            playerRef?.current?.internalPlayer.loadVideoById(props.videoIdList[index + 1].videoId, 0);
                         }
                         let videoIdListCopy = [...props.videoIdList];
                         videoIdListCopy.splice(index, 1);
@@ -108,7 +106,7 @@ export default function YoutubeFrame(props) {
     }
 
     return (
-        <YouTube videoId={currentPlaying.videoId} onReady={_onReady} onStateChange={_onStateChanged}
+        <YouTube videoId={currentPlaying.videoId} ref={playerRef} onReady={_onReady} onStateChange={_onStateChanged}
                  opts={{playerVars: {origin: window.location.origin}, width: "100%", height: "500"}}/>
     )
 }

@@ -36,7 +36,9 @@ public class InstanceController : ControllerBase {
         Instance? instance = mainContext.Instance.FirstOrDefault(instance => instance.Name == instanceName);
 
         if (instance != null) {
-            return Ok(instance);
+            IQueryable<VideoQueue> videoQueue = mainContext.VideoQueues.Where(queue => queue.InstanceId == instance.Id);
+            
+            return Ok(new {instance, videoQueue});
         }
 
         return NotFound();
