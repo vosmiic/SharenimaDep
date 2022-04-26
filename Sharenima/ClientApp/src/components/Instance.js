@@ -50,7 +50,11 @@ export default function Instance() {
             method: "GET"
         }).then((response) => {
             if (response.ok) {
-                response.json().then((json) => setInstance(json));
+                response.json().then((json) => {
+                        setInstance(json.instance)
+                        setVideoIdList(json.videoQueue);
+                    }
+                );
             }
         })
     }, [])
@@ -63,10 +67,12 @@ export default function Instance() {
                 <p>Welcome to {instance.name} created on {instance.createdDate}</p>
                 <Grid container spacing={2}>
                     <Grid item xs={8}>
-                        <YoutubeFrame signlar={connection} instance={instance} accessToken={accessToken} setVideoIdList={setVideoIdList} videoIdList={videoIdList}/>
+                        <YoutubeFrame signlar={connection} instance={instance} accessToken={accessToken}
+                                      setVideoIdList={setVideoIdList} videoIdList={videoIdList}/>
                     </Grid>
                     <Grid item xs={4}>
-                        <SidePanel signalr={connection} instance={instance} setVideoIdList={setVideoIdList} videoIdList={videoIdList}/>
+                        <SidePanel signalr={connection} instance={instance} setVideoIdList={setVideoIdList}
+                                   videoIdList={videoIdList}/>
                     </Grid>
                 </Grid>
             </div>
