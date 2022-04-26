@@ -5,7 +5,7 @@ import {instance} from "eslint-plugin-react/lib/util/lifecycleMethods";
 
 export default function YoutubeFrame(props) {
     const playerRef = useRef(null);
-    const [currentPlaying, setCurrentlyPlaying] = useState({"videoId": null});
+    const [initialLoad, setInitialLoad] = useState(true);
 
     useEffect(() => {
         if (props.accessToken != null) {
@@ -59,18 +59,16 @@ export default function YoutubeFrame(props) {
         }
     }, [props.signlar])
 
-    useEffect(() => {
-        if (props.videoIdList != null) {
-            if (props.videoIdList[0] != null) {
-                setCurrentlyPlaying(props.videoIdList[0]);
-            }
-        }
-    }, [props.videoIdList])
-
     function _onReady(event) {
-        event.target.seekTo(props.instance.timeSinceStartOfCurrentVideo);
+        if (initialLoad) {
+            event.target.seekTo(props.instance.timeSinceStartOfCurrentVideo);
+        }
+        setInitialLoad(false);
+        console.log(props.videoIdList[0]);
         if (props.instance.state !== 1) {
+            console.log("playing");
             event.target.playVideo();
+            event.target.unMute();
         } else {
             event.target.pauseVideo();
         }
@@ -91,9 +89,8 @@ export default function YoutubeFrame(props) {
                     break;
                 case 0:
                     if (props.videoIdList != null) {
-                        const index = props.videoIdList.indexOf(currentPlaying);
+                        const index = props.videoIdList[0];
                         if (props.videoIdList[index + 1] != null) {
-                            setCurrentlyPlaying(props.videoIdList[index + 1]);
                             playerRef?.current?.internalPlayer.loadVideoById(props.videoIdList[index + 1].videoId, 0);
                         }
                         let videoIdListCopy = [...props.videoIdList];
@@ -106,7 +103,12 @@ export default function YoutubeFrame(props) {
     }
 
     return (
-        <YouTube videoId={currentPlaying.videoId} ref={playerRef} onReady={_onReady} onStateChange={_onStateChanged}
-                 opts={{playerVars: {origin: window.location.origin}, width: "100%", height: "500"}}/>
+        <YouTube videoId={props.videoIdList[0] != null ? props.videoIdList[0].videoId : ""} ref={playerRef}
+                 onReady={_onReady} onStateChange={_onStateChanged}
+                 opts={{
+                     playerVars: {origin: window.location.origin, autoplay: props.instance.state !== 1 ? 1 : 0, mute: 1},
+                     width: "100%",
+                     height: "500"
+                 }}/>
     )
 }
