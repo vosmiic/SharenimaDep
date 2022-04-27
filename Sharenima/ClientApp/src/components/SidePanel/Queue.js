@@ -29,10 +29,30 @@ export default function Queue(props) {
         }
     }, [props.signalr])
     
-    function skipVideo() {
-        let videoIdListCopy = [...props.videoIdList];
-        videoIdListCopy.splice(props.videoIdList[0], 1);
-        props.setVideoIdList(videoIdListCopy);
+    useEffect(() => {
+        if (props.signalr != null) {
+            props.signalr.on("VideoRemovedFromQueue", (video) => {
+                let videoIdListCopy = [...props.videoIdList];
+                videoIdListCopy.splice(video, 1);
+                props.setVideoIdList(videoIdListCopy);
+            })
+        }
+    }, [props.signalr])
+    
+    async function skipVideo() {
+        const token = await authService.getAccessToken();
+
+        fetch("video/" + props.instance.name + "?url=" + document.getElementById("videoLink").value + "&videoId=" + props.videoIdList[0].id, {
+            method: "DELETE",
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': token ? 'Bearer ' + token : {}
+            }
+        }).then((response) => {
+            if (!response.ok) {
+                // could not skip video
+            }
+        });
     }
 
     return (<>

@@ -85,4 +85,23 @@ public class VideoController : ControllerBase {
         await _hubContext.Clients.Group(instanceName).SendAsync("VideoAddedToQueue", videoQueues);
         return Ok();
     }
+
+    [Authorize]
+    [HttpDelete]
+    public async Task<IActionResult> RemoveVideoFromQueue(string instanceName, Guid videoId) {
+        MainContext mainContext = new MainContext();
+        Instance? instance = InstanceHelper.GetInstanceByName(mainContext, instanceName);
+        if (instance == null) return BadRequest("Instance not found.");
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userId == null) return BadRequest("User ID not found.");
+        Guid parsedUserId = Guid.Parse(userId.Value);
+
+        if (instance.OwnerId != parsedUserId && !PermissionHelper.CheckIfUserHasPermissionValue(mainContext, instance.Id, parsedUserId, Permissions.CanSkipVideos, "true")) return BadRequest("User does not have permissions to remove videos from the queue.");
+        VideoQueue? videoQueue = mainContext.VideoQueues.FirstOrDefault(video => video.Id == videoId);
+        if (videoQueue == null) return BadRequest("Video not found.");
+        mainContext.VideoQueues.Remove(videoQueue);
+        await mainContext.SaveChangesAsync();
+        await _hubContext.Clients.Group(instanceName).SendAsync("VideoRemovedFromQueue", videoQueue);
+        return Ok();
+    }
 }
