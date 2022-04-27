@@ -1,10 +1,9 @@
-import {Box, IconButton, InputBase, List, Paper, Stack, Typography} from "@mui/material";
+import {Box, Button, IconButton, InputBase, List, Paper, Stack, Typography} from "@mui/material";
 import {AddCircle} from "@mui/icons-material";
 import React, {useEffect, useState} from "react";
 import authService from "../api-authorization/AuthorizeService";
 
 export default function Queue(props) {
-    const [queuedVideos, setQueuedVideos] = useState([]);
 
     async function onVideoAdd() {
         const token = await authService.getAccessToken();
@@ -29,6 +28,12 @@ export default function Queue(props) {
             })
         }
     }, [props.signalr])
+    
+    function skipVideo() {
+        let videoIdListCopy = [...props.videoIdList];
+        videoIdListCopy.splice(props.videoIdList[0], 1);
+        props.setVideoIdList(videoIdListCopy);
+    }
 
     return (<>
             <Paper>
@@ -45,6 +50,9 @@ export default function Queue(props) {
                     </Box>
                 })}
             </List>
+            <Button onClick={skipVideo}>
+                Skip
+            </Button>
         </>
     )
 }
