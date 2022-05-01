@@ -1,7 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import YouTube from "react-youtube";
-import authService from "../api-authorization/AuthorizeService";
-import {instance} from "eslint-plugin-react/lib/util/lifecycleMethods";
+import {Typography} from "@mui/material";
 
 export default function YoutubeFrame(props) {
     const playerRef = useRef(null);
@@ -64,11 +63,10 @@ export default function YoutubeFrame(props) {
             event.target.seekTo(props.instance.timeSinceStartOfCurrentVideo);
         }
         setInitialLoad(false);
-        console.log(props.videoIdList[0]);
-        if (props.instance.state !== 1) {
+
+        if (props.instance.state !== 1 && props.videoIdList[0] != null) {
             console.log("playing");
             event.target.playVideo();
-            event.target.unMute();
         } else {
             event.target.pauseVideo();
         }
@@ -102,13 +100,17 @@ export default function YoutubeFrame(props) {
         }
     }
 
-    return (
-        <YouTube videoId={props.videoIdList[0] != null ? props.videoIdList[0].videoId : ""} ref={playerRef}
+    if (props.videoIdList[0] != null) { return (
+        <YouTube videoId={props.videoIdList[0].videoId} ref={playerRef}
                  onReady={_onReady} onStateChange={_onStateChanged}
                  opts={{
-                     playerVars: {origin: window.location.origin, autoplay: props.instance.state !== 1 ? 1 : 0, mute: 1},
+                     playerVars: {origin: window.location.origin, autoplay: 1, mute: 1},
                      width: "100%",
                      height: "500"
                  }}/>
-    )
+    )} else {
+        return <div>
+            <Typography>Please add a video to the queue</Typography>
+        </div>
+    }
 }
