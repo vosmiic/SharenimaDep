@@ -1,10 +1,10 @@
 import {Box, Button, IconButton, InputBase, List, Paper, Stack, Typography} from "@mui/material";
 import {AddCircle} from "@mui/icons-material";
-import React, {useEffect, useState} from "react";
+import React, {useEffect} from "react";
 import authService from "../api-authorization/AuthorizeService";
+import VideoUpload from "./VideoUpload";
 
 export default function Queue(props) {
-
     async function onVideoAdd() {
         const token = await authService.getAccessToken();
 
@@ -16,7 +16,7 @@ export default function Queue(props) {
             }
         }).then((response) => {
             if (response.ok) {
-                
+
             }
         });
     }
@@ -28,7 +28,7 @@ export default function Queue(props) {
             })
         }
     }, [props.signalr])
-    
+
     useEffect(() => {
         if (props.signalr != null) {
             props.signalr.on("VideoRemovedFromQueue", (video) => {
@@ -38,7 +38,7 @@ export default function Queue(props) {
             })
         }
     }, [props.signalr])
-    
+
     async function skipVideo() {
         const token = await authService.getAccessToken();
 
@@ -61,6 +61,7 @@ export default function Queue(props) {
                 <IconButton onClick={onVideoAdd}>
                     <AddCircle color={"primary"}/>
                 </IconButton>
+                <VideoUpload instance={props.instance}/>
             </Paper>
             <List spacing={2}>
                 {props.videoIdList.map((video) => {

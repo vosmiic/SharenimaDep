@@ -10,6 +10,7 @@ const context =  [
   "/roles",
   "/hub",
     "/video",
+    "/upload",
   "/weatherforecast",
   "/_configuration",
   "/.well-known",

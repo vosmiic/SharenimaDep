@@ -1,3 +1,5 @@
+using System.Net;
+using System.Security.Claims;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -5,8 +7,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Sharenima.Data;
+using Sharenima.Helpers;
 using Sharenima.Models;
 using Sharenima.Services;
+using tusdotnet;
+using tusdotnet.Models;
+using tusdotnet.Models.Configuration;
+using tusdotnet.Stores;
 
 namespace Sharenima;
 
@@ -79,6 +86,45 @@ public class Startup {
                 name: "default",
                 pattern: "{controller}/{action=Index}/{id?}");
             endpoints.MapFallbackToFile("index.html");
+        });
+
+        app.UseTus(httpContext => new DefaultTusConfiguration {
+            Store = new TusDiskStore(@"/home/patrick/Desktop/tmp/"),
+            UrlPath = "/upload",
+            Events = new Events {
+                OnAuthorizeAsync = eventContext => {
+                    if (!eventContext.HttpContext.User.Identity.IsAuthenticated) {
+                        eventContext.FailRequest(HttpStatusCode.Unauthorized);
+                        return Task.CompletedTask;
+                    } else {
+                        MainContext mainContext = new MainContext();
+                        string? instanceName = eventContext.HttpContext.Request.Headers["instance"];
+                        if (instanceName == null) {
+                            eventContext.FailRequest(HttpStatusCode.BadRequest);
+                            return Task.CompletedTask;
+                        }
+
+                        Instance? instance = mainContext.Instance.FirstOrDefault(instance => instance.Name == instanceName);
+                        if (instance == null) {
+                            eventContext.FailRequest(HttpStatusCode.BadRequest);
+                            return Task.CompletedTask;
+                        }
+
+                        var userId = eventContext.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+                        if (userId == null) {
+                            eventContext.FailRequest(HttpStatusCode.Unauthorized);
+                            return Task.CompletedTask;
+                        }
+
+                        if (instance.OwnerId == Guid.Parse(userId.Value) || PermissionHelper.CheckIfUserHasPermissionValue(mainContext, instance.Id, Guid.Parse(userId.Value), Permissions.CanUploadVideos, "true")) {
+                            return Task.CompletedTask;
+                        } else {
+                            eventContext.FailRequest(HttpStatusCode.Unauthorized);
+                            return Task.CompletedTask;
+                        }
+                    }
+                }
+            }
         });
     }
 }
