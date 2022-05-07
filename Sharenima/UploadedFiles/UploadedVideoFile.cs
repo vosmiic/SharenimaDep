@@ -41,7 +41,7 @@ public class UploadedVideoFile {
                 }
             }
         } else {
-            RenameVideo();
+            AddVideoFileExtension();
             videoQueue.Url = OriginalFileName;
             string? videoThumbnail = await VideoThumbnail(OriginalFileLocation);
             if (videoThumbnail != null) {
@@ -120,16 +120,18 @@ public class UploadedVideoFile {
         return true;
     }
 
-    private void RenameVideo() {
+    private void AddVideoFileExtension() {
         if (Metadata.ContainsKey("filetype")) {
             string mimeType = Metadata["filetype"].GetString(Encoding.UTF8);
             switch (mimeType) {
                 case "video/webm":
+                    if (OriginalFileLocation.EndsWith(".webm")) return;
                     System.IO.File.Move(OriginalFileLocation, $"{OriginalFileLocation}.webm");
                     OriginalFileName = $"{OriginalFileName}.webm";
                     OriginalFileLocation = $"{OriginalFileLocation}.webm";
                     return;
                 case "video/mp4":
+                    if (OriginalFileLocation.EndsWith(".mp4")) return;
                     System.IO.File.Move(OriginalFileLocation, $"{OriginalFileLocation}.mp4");
                     OriginalFileName = $"{OriginalFileName}.mp4";
                     OriginalFileLocation = $"{OriginalFileLocation}.mp4";
