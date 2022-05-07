@@ -23,5 +23,7 @@ public enum Permissions {
     [Description("Can Pause/Resume Videos?")]
     CanPauseResumeVideos,
     [Description("Can Chat?")]
-    CanChat
+    CanChat,
+    [Description("Can Upload Videos?")]
+    CanUploadVideos
 }
