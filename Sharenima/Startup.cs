@@ -140,7 +140,7 @@ public class Startup {
                         video.Type = VideoType.UploadedVideo;
 
                         mainContext.VideoQueues.Add(video);
-                        //await mainContext.SaveChangesAsync();
+                        await mainContext.SaveChangesAsync();
                         var hub = eventContext.HttpContext.RequestServices.GetService<IHubContext<SignalRHub>>();
                         hub?.Clients.Group(eventContext.HttpContext.Request.Headers["instance"]).SendAsync("VideoAddedToQueue", video);
                     }
