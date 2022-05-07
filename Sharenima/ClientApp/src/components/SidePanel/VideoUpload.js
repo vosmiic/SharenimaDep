@@ -10,7 +10,6 @@ import authService from "../api-authorization/AuthorizeService";
 
 export default function VideoUpload(props) {
     const [displayVideoUpload, setDisplayVideoUpload] = useState(false);
-    const [fileObjects, setFileObjects] = useState([]);
 
     const uppy = new Uppy({
         meta: { type: 'avatar' },
@@ -32,13 +31,6 @@ export default function VideoUpload(props) {
         run();
         
     }, [uppy])
-
-    
-    async function getToken() {
-        await authService.getAccessToken().then((value) => {
-            return value;
-        });
-    }
     
     uppy.on('complete', (result) => {
         const url = result.successful[0].uploadURL
@@ -58,16 +50,4 @@ export default function VideoUpload(props) {
             />
         </>
     )
-    
-    /*
-                <DropzoneAreaBase
-                open={displayVideoUpload} 
-                fileObjects={fileObjects}
-                maxFileSize={99999999999}
-                onAdd={(file) => {
-                    console.log(file);
-                    setFileObjects(file);
-                }}
-            />
-     */
 }
