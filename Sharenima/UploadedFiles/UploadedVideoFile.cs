@@ -30,16 +30,16 @@ public class UploadedVideoFile {
             Title = Metadata["filename"].GetString(Encoding.UTF8)
         };
         if (await VideoNeedsReEncoding()) {
-            string? videoPath = await ReEncodeVideo();
-            if (videoPath != null) {
-                videoQueue.Url = videoPath;
-                string? videoThumbnail = await VideoThumbnail(videoPath);
+            string? newFileName = await ReEncodeVideo();
+            if (newFileName != null) {
+                videoQueue.Url = newFileName;
+                string? videoThumbnail = await VideoThumbnail(newFileName);
                 if (videoThumbnail != null) {
                     videoQueue.ThumbnailUrl = videoThumbnail;
                 }
             }
         } else {
-            videoQueue.Url = OriginalFileLocation;
+            videoQueue.Url = Metadata["filename"].GetString(Encoding.UTF8);
             string? videoThumbnail = await VideoThumbnail(OriginalFileLocation);
             if (videoThumbnail != null) {
                 videoQueue.ThumbnailUrl = videoThumbnail;
@@ -50,7 +50,7 @@ public class UploadedVideoFile {
     }
 
     private async Task<string?> VideoThumbnail(string videoFileLocation) {
-        string outputPath = Path.Combine(Startup.Configuration["VideoUploadStorageLocation"], $"{Metadata["filename"]}Thumbnail.png");
+        string fileName = $"{Metadata["filename"]}Thumbnail.png";
         int videoLength;
         try {
             var probe = await Probe.New().Start($"-v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 {videoFileLocation}");
@@ -61,26 +61,26 @@ public class UploadedVideoFile {
         }
 
         try {
-            var snapshot = await FFmpeg.Conversions.FromSnippet.Snapshot(videoFileLocation, outputPath, TimeSpan.FromSeconds(new Random().Next(0, videoLength)));
+            var snapshot = await FFmpeg.Conversions.FromSnippet.Snapshot(videoFileLocation, Path.Combine(Startup.Configuration["VideoUploadStorageLocation"], fileName), TimeSpan.FromSeconds(new Random().Next(0, videoLength)));
             await snapshot.Start();
         } catch (Exception e) {
             Console.WriteLine(e.Message);
             return null;
         }
 
-        return outputPath;
+        return fileName;
     }
 
     private async Task<string?> ReEncodeVideo() {
         int retryCounter = 0;
         while (retryCounter < 10) {
-            string outputPath = Path.Combine(Startup.Configuration["VideoUploadStorageLocation"], $"{Metadata["filename"].ToString()}Converted{retryCounter}.webm");
+            string fileName = $"{Metadata["filename"].ToString()}Converted{retryCounter}.webm";
 
             try {
                 await FFmpeg.Conversions.New()
                     .AddParameter($"-i {OriginalFileLocation} -c:v vp9 -row-mt 1")
                     .SetOverwriteOutput(false)
-                    .SetOutput(outputPath)
+                    .SetOutput(Path.Combine(Startup.Configuration["VideoUploadStorageLocation"], fileName))
                     .Start();
             } catch (Exception e) {
                 if (e.Message.Split('\n').Last().Contains("already exists")) {
@@ -92,7 +92,7 @@ public class UploadedVideoFile {
                 }
             }
 
-            return outputPath;
+            return fileName;
         }
 
         return null;

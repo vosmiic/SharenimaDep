@@ -55,6 +55,14 @@ export default function Queue(props) {
             }
         });
     }
+    
+    function GetVideoImage(video) {
+        if (video.type === "UploadedVideo") {
+            return "/files/" + video.thumbnailUrl;
+        } else {
+            return video.thumbnailUrl
+        }
+    }
 
     return (<>
             <Paper>
@@ -67,7 +75,7 @@ export default function Queue(props) {
             <List spacing={2}>
                 {props.videoIdList.map((video) => {
                     return <Box>
-                        <img src={video.thumbnailUrl}/>
+                        <img src={GetVideoImage(video)}/>
                         <Typography>{video.title}</Typography>
                     </Box>
                 })}

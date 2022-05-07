@@ -56,7 +56,8 @@ public class VideoController : ControllerBase {
                 Title = video.Title,
                 Description = video.Description,
                 Url = url,
-                VideoId = video.Id
+                VideoId = video.Id,
+                Type = VideoType.YoutubeVideo
             };
             
             mainContext.VideoQueues.Add(videoQueueEntry);
@@ -75,7 +76,8 @@ public class VideoController : ControllerBase {
                 ThumbnailUrl = video.Thumbnails.MinBy(thumbnail => thumbnail.Resolution.Area)?.Url,
                 Title = video.Title,
                 Description = video.Description,
-                Url = url
+                Url = url,
+                Type = VideoType.YoutubeVideo
             };
             videoQueues.Add(videoQueueEntry);
         }

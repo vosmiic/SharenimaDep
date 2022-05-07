@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Sharenima.Data;
 using Sharenima.Helpers;
@@ -74,7 +75,10 @@ public class Startup {
         }
 
         app.UseHttpsRedirection();
-        app.UseStaticFiles();
+        app.UseStaticFiles(new StaticFileOptions {
+            FileProvider = new PhysicalFileProvider("/home/patrick/Desktop/tmp/"),
+            RequestPath = "/files"
+        });
         app.UseRouting();
 
         app.UseAuthentication();
@@ -133,9 +137,10 @@ public class Startup {
                         video.CreatedDateTime = DateTime.UtcNow;
                         video.Description = "Uploaded video.";
                         video.InstanceId = instance.Id;
+                        video.Type = VideoType.UploadedVideo;
 
                         mainContext.VideoQueues.Add(video);
-                        await mainContext.SaveChangesAsync();
+                        //await mainContext.SaveChangesAsync();
                         var hub = eventContext.HttpContext.RequestServices.GetService<IHubContext<SignalRHub>>();
                         hub?.Clients.Group(eventContext.HttpContext.Request.Headers["instance"]).SendAsync("VideoAddedToQueue", video);
                     }
