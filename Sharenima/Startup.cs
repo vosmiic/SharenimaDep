@@ -1,8 +1,10 @@
 using System.Net;
 using System.Security.Claims;
+using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -10,7 +12,9 @@ using Sharenima.Data;
 using Sharenima.Helpers;
 using Sharenima.Models;
 using Sharenima.Services;
+using Sharenima.UploadedFiles;
 using tusdotnet;
+using tusdotnet.Interfaces;
 using tusdotnet.Models;
 using tusdotnet.Models.Configuration;
 using tusdotnet.Stores;
@@ -79,19 +83,10 @@ public class Startup {
 
         app.UseCors("CorsPolicy");
 
-        app.UseEndpoints(endpoints => {
-            endpoints.MapRazorPages();
-            endpoints.MapHub<SignalRHub>("/hub");
-            endpoints.MapControllerRoute(
-                name: "default",
-                pattern: "{controller}/{action=Index}/{id?}");
-            endpoints.MapFallbackToFile("index.html");
-        });
-
         app.UseTus(httpContext => new DefaultTusConfiguration {
-            Store = new TusDiskStore(@"/home/patrick/Desktop/tmp/"),
+            Store = new TusDiskStore(Configuration["VideoUploadStorageLocation"]),
             UrlPath = "/upload",
-            Events = new Events {
+            Events = new() {
                 OnAuthorizeAsync = eventContext => {
                     if (!eventContext.HttpContext.User.Identity.IsAuthenticated) {
                         eventContext.FailRequest(HttpStatusCode.Unauthorized);
@@ -123,8 +118,39 @@ public class Startup {
                             return Task.CompletedTask;
                         }
                     }
+                },
+                OnFileCompleteAsync = async eventContext => {
+                    UploadedVideoFile uploadedVideoFile = new UploadedVideoFile(eventContext);
+
+                    VideoQueue video = await uploadedVideoFile.ProcessUploadedVideoFile();
+                    if (!String.IsNullOrEmpty(video.Url)) {
+                        MainContext mainContext = new MainContext();
+                        var userId = eventContext.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+                        string? instanceName = eventContext.HttpContext.Request.Headers["instance"];
+                        Instance? instance = mainContext.Instance.FirstOrDefault(instance => instance.Name == instanceName);
+
+                        video.AddedBy = Guid.Parse(userId.Value);
+                        video.CreatedDateTime = DateTime.UtcNow;
+                        video.Description = "Uploaded video.";
+                        video.InstanceId = instance.Id;
+
+                        mainContext.VideoQueues.Add(video);
+                        await mainContext.SaveChangesAsync();
+                        var hub = eventContext.HttpContext.RequestServices.GetService<IHubContext<SignalRHub>>();
+                        hub?.Clients.Group(eventContext.HttpContext.Request.Headers["instance"]).SendAsync("VideoAddedToQueue", video);
+                    }
                 }
             }
+        });
+
+
+        app.UseEndpoints(endpoints => {
+            endpoints.MapRazorPages();
+            endpoints.MapHub<SignalRHub>("/hub");
+            endpoints.MapControllerRoute(
+                name: "default",
+                pattern: "{controller}/{action=Index}/{id?}");
+            endpoints.MapFallbackToFile("index.html");
         });
     }
 }
