@@ -100,7 +100,7 @@ export default function YoutubeFrame(props) {
         }
     }
 
-    if (props.videoIdList[0] != null) { return (
+    return (
         <YouTube videoId={props.videoIdList[0].videoId} ref={playerRef}
                  onReady={_onReady} onStateChange={_onStateChanged}
                  opts={{
@@ -108,9 +108,5 @@ export default function YoutubeFrame(props) {
                      width: "100%",
                      height: "500"
                  }}/>
-    )} else {
-        return <div>
-            <Typography>Please add a video to the queue</Typography>
-        </div>
-    }
+    )
 }
