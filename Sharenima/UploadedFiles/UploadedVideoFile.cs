@@ -11,6 +11,7 @@ namespace Sharenima.UploadedFiles;
 
 public class UploadedVideoFile {
     public ITusFile File { get; set; }
+    private string OriginalFileName { get; set; }
     private string OriginalFileLocation { get; set; }
     private Dictionary<string, Metadata> Metadata { get; set; }
     private string Codec { get; set; }
@@ -18,6 +19,7 @@ public class UploadedVideoFile {
     public UploadedVideoFile(FileCompleteContext eventContext) {
         this.File = eventContext.GetFileAsync().Result;
         Metadata = File.GetMetadataAsync(eventContext.CancellationToken).Result;
+        OriginalFileName = eventContext.FileId;
         OriginalFileLocation = Path.Combine(Startup.Configuration["VideoUploadStorageLocation"], eventContext.FileId);
         if (!Metadata.ContainsKey("filename")) throw new NullReferenceException("Filename not found");
     }
@@ -39,7 +41,7 @@ public class UploadedVideoFile {
                 }
             }
         } else {
-            videoQueue.Url = Metadata["filename"].GetString(Encoding.UTF8);
+            videoQueue.Url = OriginalFileName;
             string? videoThumbnail = await VideoThumbnail(OriginalFileLocation);
             if (videoThumbnail != null) {
                 videoQueue.ThumbnailUrl = videoThumbnail;
