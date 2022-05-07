@@ -41,6 +41,7 @@ public class UploadedVideoFile {
                 }
             }
         } else {
+            RenameVideo();
             videoQueue.Url = OriginalFileName;
             string? videoThumbnail = await VideoThumbnail(OriginalFileLocation);
             if (videoThumbnail != null) {
@@ -102,7 +103,7 @@ public class UploadedVideoFile {
 
     private async Task<bool> VideoNeedsReEncoding() {
         if (Metadata.ContainsKey("filetype")) {
-            string mimeType = Metadata["filetype"].GetString(Encoding.UTF8); //video/webm
+            string mimeType = Metadata["filetype"].GetString(Encoding.UTF8);
             string? codec;
             switch (mimeType) {
                 case "video/webm":
@@ -117,6 +118,26 @@ public class UploadedVideoFile {
         }
 
         return true;
+    }
+
+    private void RenameVideo() {
+        if (Metadata.ContainsKey("filetype")) {
+            string mimeType = Metadata["filetype"].GetString(Encoding.UTF8);
+            switch (mimeType) {
+                case "video/webm":
+                    System.IO.File.Move(OriginalFileLocation, $"{OriginalFileLocation}.webm");
+                    OriginalFileName = $"{OriginalFileName}.webm";
+                    OriginalFileLocation = $"{OriginalFileLocation}.webm";
+                    return;
+                case "video/mp4":
+                    System.IO.File.Move(OriginalFileLocation, $"{OriginalFileLocation}.mp4");
+                    OriginalFileName = $"{OriginalFileName}.mp4";
+                    OriginalFileLocation = $"{OriginalFileLocation}.mp4";
+                    return;
+                default:
+                    return;
+            }
+        }
     }
 
     private async Task<string?> GetVideoCodec() {
