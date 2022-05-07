@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Sharenima.Models;
 
 public class VideoQueue : ModelBase {
@@ -9,4 +11,12 @@ public class VideoQueue : ModelBase {
     public string ThumbnailUrl { get; set; }
     public Guid AddedBy { get; set; }
     public DateTime CreatedDateTime { get; set; }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public VideoType Type { get; set; }
+}
+
+public enum VideoType {
+    YoutubeVideo,
+    UploadedVideo
 }
