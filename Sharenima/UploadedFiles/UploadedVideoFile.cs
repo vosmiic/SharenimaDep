@@ -61,8 +61,8 @@ public class UploadedVideoFile {
         }
 
         try {
-            var xd = await FFmpeg.Conversions.FromSnippet.Snapshot(videoFileLocation, outputPath, TimeSpan.FromSeconds(new Random().Next(0, videoLength)));
-            await xd.Start();
+            var snapshot = await FFmpeg.Conversions.FromSnippet.Snapshot(videoFileLocation, outputPath, TimeSpan.FromSeconds(new Random().Next(0, videoLength)));
+            await snapshot.Start();
         } catch (Exception e) {
             Console.WriteLine(e.Message);
             return null;
