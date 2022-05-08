@@ -1,17 +1,42 @@
-import React from 'react';
-import YoutubeFrame from "./YoutubeFrame";
+import React, {useEffect, useState} from 'react';
+import YoutubeFrame from "./Types/YoutubeFrame";
 import {Typography} from "@mui/material";
+import UploadedVideo from "./Types/UploadedVideo";
 
 export default function VideoTypeSwitch(props) {
+    const [pauseVideo, setPauseVideo] = useState(false);
 
-    if (props.videoIdList.length > 0) {
-        switch (props.videoIdList[0].type) {
+    useEffect(() => {
+        if (props.signalr != null) {
+            props.signalr.on("StateChange", (state) => {
+                switch (state) {
+                    case "Playing":
+                        setPauseVideo(true);
+                        break;
+                    case "Paused":
+                        setPauseVideo(false);
+                        break;
+                }
+            })
+        }
+    }, [props.signalr])
+
+    if (props.videoList.length > 0) {
+        switch (props.videoList[0].type) {
             case "YoutubeVideo":
-                return <YoutubeFrame signlar={props.connection} instance={props.instance}
+                return <YoutubeFrame signalr={props.signalr}
+                                     instance={props.instance}
                                      accessToken={props.accessToken}
-                                     setVideoIdList={props.setVideoIdList} videoIdList={props.videoIdList}/>
+                                     setVideoList={props.setVideoList}
+                                     videoList={props.videoList}
+                />
             case "UploadedVideo":
-                return "uploaded video";
+                return <UploadedVideo signalr={props.signalr}
+                                      instance={props.instance}
+                                      setVideoList={props.setVideoList}
+                                      videoList={props.videoList}
+                                      pauseVideo={pauseVideo}
+                />
         }
     } else {
         return <div>
