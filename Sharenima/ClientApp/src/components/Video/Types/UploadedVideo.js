@@ -3,8 +3,9 @@ import {useEffect, useRef, useState} from "react";
 
 export default function UploadedVideo(props) {
     const videoPlayer = useRef(null);
+    const [initialLoad, setInitialLoad] = useState(true);
     const [muted, setMuted] = useState(false);
-    
+
     useEffect(() => {
         if (props.pauseVideo) {
             videoPlayer.current.pause();
@@ -27,8 +28,13 @@ export default function UploadedVideo(props) {
     async function handleOnEnded() {
         await OnVideoFinished(props.videoList, props.setVideoList);
     }
-    
-    async function handleOnLoad() {
+
+    useEffect(() => {
+        if (initialLoad) {
+            videoPlayer.current.currentTime = props.instance.timeSinceStartOfCurrentVideo;
+        }
+        setInitialLoad(false);
+
         if (props.instance.state !== 1 && props.videoList[0] != null) {
             console.log("playing");
             videoPlayer.current.play().catch(() => {
@@ -38,13 +44,12 @@ export default function UploadedVideo(props) {
         } else {
             videoPlayer.current.pause();
         }
-    }
+    }, [])
 
     return <video
         onPlay={handleOnPlay}
         onPause={handleOnPause}
         onEnded={handleOnEnded}
-        onLoad={handleOnLoad}
         muted={muted}
         controls
         ref={videoPlayer}
