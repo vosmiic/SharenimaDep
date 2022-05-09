@@ -4,7 +4,7 @@ import {Typography} from "@mui/material";
 import UploadedVideo from "./Types/UploadedVideo";
 
 export default function VideoTypeSwitch(props) {
-    const [pauseVideo, setPauseVideo] = useState(false);
+    const [pauseVideo, setPauseVideo] = useState(props.instance.state === 1);
 
     useEffect(() => {
         if (props.signalr != null) {

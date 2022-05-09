@@ -34,22 +34,13 @@ export default function UploadedVideo(props) {
             videoPlayer.current.currentTime = props.instance.timeSinceStartOfCurrentVideo;
         }
         setInitialLoad(false);
-
-        if (props.instance.state !== 1 && props.videoList[0] != null) {
-            console.log("playing");
-            videoPlayer.current.play().catch(() => {
-                videoPlayer.current.mute();
-                videoPlayer.current.play();
-            });
-        } else {
-            videoPlayer.current.pause();
-        }
     }, [])
 
     return <video
         onPlay={handleOnPlay}
         onPause={handleOnPause}
         onEnded={handleOnEnded}
+        autoPlay={props.pauseVideo}
         muted={muted}
         controls
         ref={videoPlayer}
