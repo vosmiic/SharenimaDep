@@ -4,17 +4,18 @@ import {Typography} from "@mui/material";
 import UploadedVideo from "./Types/UploadedVideo";
 
 export default function VideoTypeSwitch(props) {
-    const [pauseVideo, setPauseVideo] = useState(props.instance.state === 1);
+    const [autoPlay, setAutoPlay] = useState(props.instance.state !== 1);
+    const [play, setPlay] = useState(props.instance.state !== 1);
 
     useEffect(() => {
         if (props.signalr != null) {
             props.signalr.on("StateChange", (state) => {
                 switch (state) {
                     case "Playing":
-                        setPauseVideo(true);
+                        setPlay(true);
                         break;
                     case "Paused":
-                        setPauseVideo(false);
+                        setPlay(false);
                         break;
                 }
             })
@@ -35,7 +36,8 @@ export default function VideoTypeSwitch(props) {
                                       instance={props.instance}
                                       setVideoList={props.setVideoList}
                                       videoList={props.videoList}
-                                      pauseVideo={pauseVideo}
+                                      autoPlay={autoPlay}
+                                      play={play}
                 />
         }
     } else {
