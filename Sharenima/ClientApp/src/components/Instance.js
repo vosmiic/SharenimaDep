@@ -6,7 +6,7 @@ import InstanceSettings from "./InstanceSettings/InstanceSettings";
 import {Grid, IconButton, InputBase, Paper} from "@mui/material";
 import {AddCircle} from "@mui/icons-material";
 import SidePanel from "./SidePanel/SidePanel";
-import VideoTypeSwitch from "./Video/VideoTypeSwitch";
+import Video from "./Video/Video";
 
 export default function Instance() {
     let [instance, setInstance] = useState(null);
@@ -67,8 +67,11 @@ export default function Instance() {
                 <p>Welcome to {instance.name} created on {instance.createdDate}</p>
                 <Grid container spacing={2}>
                     <Grid item xs={8}>
-                        <VideoTypeSwitch signalr={connection} instance={instance} accessToken={accessToken}
-                                         setVideoList={setVideoList} videoList={videoList}/>
+                        <Video signalr={connection}
+                               instance={instance}
+                               setInstance={setInstance}
+                               setVideoList={setVideoList}
+                               videoList={videoList}/>
                     </Grid>
                     <Grid item xs={4}>
                         <SidePanel signalr={connection} instance={instance} setVideoIdList={setVideoList}
