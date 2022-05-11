@@ -10,7 +10,6 @@ export async function OnVideoPause(hubConnection, instanceName) {
 }
 
 export async function OnVideoPlay(hubConnection, instanceName) {
-    console.log(hubConnection);
     if (hubConnection && instanceName) {
         hubConnection.invoke("StateChange", instanceName, await authService.getAccessToken(), "Playing").catch(function (err) {
             return console.error(err.toString());
@@ -21,11 +20,6 @@ export async function OnVideoPlay(hubConnection, instanceName) {
 export async function OnVideoFinished(videoList, setVideoList) {
     if (videoList != null) {
         const index = videoList[0];
-        /*if (videoList[index + 1] != null) {
-            if (playerRef != null) {
-                playerRef.current?.internalPlayer.loadVideoById(videoList[index + 1].videoId, 0);
-            }
-        }*/
         let videoListCopy = [...videoList];
         videoListCopy.splice(index, 1);
         setVideoList(videoListCopy);
