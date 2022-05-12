@@ -1,7 +1,8 @@
-import {OnVideoFinished, OnVideoPause, OnVideoPlay} from "./VideoHelper";
+import {OnProgress, OnVideoFinished, OnVideoPause, OnVideoPlay} from "./VideoHelper";
 import React, {useEffect, useRef, useState} from "react";
 import ReactPlayer from "react-player";
 import {Typography} from "@mui/material";
+import authService from "../api-authorization/AuthorizeService";
 
 export default function Video(props) {
     let videoPlayer = useRef(null);
@@ -13,7 +14,7 @@ export default function Video(props) {
     useEffect(() => {
         if (props.signalr != null) {
             props.signalr.on("StateChange", (state) => {
-                let newVideoSettings = videoSettings;
+                let newVideoSettings = {...videoSettings};
                 let newInstance = props.instance;
 
                 switch (state) {
@@ -29,6 +30,20 @@ export default function Video(props) {
 
                 setVideoSettings(newVideoSettings);
                 props.setInstance(newInstance);
+            })
+        }
+    }, [props.signalr])
+
+    useEffect(() => {
+        if (props.signalr != null) {
+            props.signalr.on("ProgressChange", (time) => {
+                if (videoPlayer && videoPlayer.getCurrentTime) {
+                    const difference = videoPlayer.getCurrentTime - time;
+                    console.log(difference);
+                    if (difference < -2 || difference > 2) {
+                        videoPlayer.seekTo(time);
+                    }
+                }
             })
         }
     }, [props.signalr])
@@ -49,9 +64,23 @@ export default function Video(props) {
     }
 
     function onReady() {
+        console.log(videoPlayer);
         if (initialLoad) {
-            videoPlayer.seekTo(props.instance.timeSinceStartOfCurrentVideo, "seconds");
+            videoPlayer.seekTo(props.instance.timeSinceStartOfCurrentVideo, 'seconds');
             setInitialLoad(false);
+        }
+    }
+
+    async function handleOnProgress(event) {
+        const token = await authService.getAccessToken();
+        if (props.signalr != null && videoPlayer) {
+            try {
+                props.signalr.invoke("ReceiveClientTime", props.instance.name, token, event.playedSeconds).catch(function (err) {
+                    return console.error(err.toString());
+                });
+            } catch (err) {
+                console.error(err);
+            }
         }
     }
 
@@ -61,6 +90,9 @@ export default function Video(props) {
             onPause={handleOnPause}
             onEnded={handleOnEnded}
             onReady={onReady}
+            onProgress={(event) => {
+                handleOnProgress(event)
+            }}
             controls
             playing={videoSettings.playing}
             muted={true}
